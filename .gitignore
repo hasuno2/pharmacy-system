@@ -1,0 +1,24 @@
+# Byte-compiled files
+__pycache__/
+*.py[cod]
+*.so
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE/editor junk
+.vscode/
+.idea/
+
+# OS trash
+.DS_Store
+Thumbs.db
+
+# Environment/config files
+.env
+*.log
+
+# Jupyter/IPython
+.ipynb_checkpoints/
