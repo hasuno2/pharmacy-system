@@ -1,5 +1,5 @@
 from tkinter import *
-
+from frontend import registration
 
 def set_placeholder(entry, placeholder_text, is_password=False):
     entry.insert(0, placeholder_text)
@@ -25,14 +25,10 @@ def set_placeholder(entry, placeholder_text, is_password=False):
 def logowanie_placehold(user,password):
     print("logowanie")
 
-def rejestracja_placehold():
-    print("Rejestracja")
 
-
-def login_window():
-    window = Tk()
-    window.title("Login")
-    window.geometry("400x300")
+def login_window(window):
+    for widget in window.winfo_children():
+        widget.destroy()
 
     frame_login = Frame(window)
     frame_login.place(relx=0.5, rely=0.5, anchor=CENTER)
@@ -51,9 +47,11 @@ def login_window():
     set_placeholder(entry_haslo, "Wpisz hasło", is_password=True)
 
     Button(frame_login, text="Logowanie", command=lambda: logowanie_placehold(login.get(),haslo.get)).grid(row=2, column=0, columnspan=2, pady=10)
-    Button(frame_login, text="Rejestracja", command=lambda: rejestracja_placehold()).grid(row=3, column=0, columnspan=2)
-
-    window.mainloop()
+    Button(frame_login, text="Rejestracja", command=lambda: registration.registration_window(window,login_window)).grid(row=3, column=0, columnspan=2)
 
 
-login_window()
+window = Tk()
+window.title("Aplikacja")
+window.geometry("400x300")
+login_window(window)
+window.mainloop()
