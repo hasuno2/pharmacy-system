@@ -8,6 +8,7 @@ addressDf = pd.read_csv(globals.ADDRESS_DB, dtype=str)
 # print(customersDf.to_string())
 # print(addressDf.to_string())
 columnMap = {
+    'ID': 'ID',
     'name': 'NAME',
     'email': 'E-MAIL',
     'phone': 'PHONE',
@@ -68,17 +69,24 @@ def removeCustomer(cdf, adf, identifier='', name=''):
         adf.drop(i, inplace=True)
 
 
-def updateCustomer(cdf, identifier, **kwargs):
+def updateCustomer(cdf, adf, identifier, **kwargs):
     for arg, value in kwargs.items():
-        column = columnMap[arg] # possible error
+        column = columnMap[arg] # possible exception
         if column:
             if column in cdf.columns:
                 cdf.loc[cdf['ID'] == str(identifier), column] = value
             elif column in addressDf.columns:
-                addressDf.loc[addressDf['ID'] == str(identifier), column] = value
+                adf.loc[addressDf['ID'] == str(identifier), column] = value
             else:
                 # not possible I think
                 raise Exception
         else:
             print(f'Warning: Column name "{arg}" is not present in {globals.CUSTOMERS_DB} or {globals.ADDRESS_DB}.')
     cdf.loc[cdf['ID'] == str(identifier), 'UPDATED'] = dateToday
+
+
+def findAddress(adf, identifier):
+    result = {}
+    for column in adf.columns[1:]:
+        result[column] = adf.loc[adf.ID == str(identifier), column].values[0]
+    return result
