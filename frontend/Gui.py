@@ -34,6 +34,14 @@ def get_data(search_term=None):
         return df[df['NAME'].str.contains(search_term, case=False, na=False)]
     return df
 
+# Przykładowe źródło leków
+def get_drug_data():
+    data = [
+        {'ID': 1, 'DRUG': 'Aspiryna', 'ON_RECEPT': True, 'NO_PACKAGES_AVAILABLE': 10, 'DATE': '2025-05-01'},
+        {'ID': 2, 'DRUG': 'Paracetamol', 'ON_RECEPT': False, 'NO_PACKAGES_AVAILABLE': 5, 'DATE': '2025-04-15'}
+    ]
+    return pd.DataFrame(data)
+
 # Ekran logowania
 def logowanie(login, password):
     # Tymczasowy warunek wyboru roli
@@ -120,8 +128,7 @@ def admin_window(window):
     frame_main.pack(expand=True)
 
     Button(frame_main, text="Sprawdź wszystkich użytkowników", width=30, bg="#4CAF50", fg="white", command=lambda: admin_users_window(window)).pack(pady=5)
-    Button(frame_main, text="Zakup leków", width=30, bg="#2196F3", fg="white").pack(pady=5)
-    Button(frame_main, text="Dodaj nowe leki", width=30, bg="#FF9800", fg="white").pack(pady=5)
+    Button(frame_main, text="Zakup leków", width=30, bg="#2196F3", fg="white", command=lambda: purchase_window(window)).pack(pady=5)
 
 # Panel administracji użytkowników
 
@@ -176,6 +183,96 @@ def admin_users_window(window):
         Button(p, text='Zapisz', command=save).pack(pady=10)
 
     populate_tree(get_data())
+
+#zakup leków i dodawanie nowych
+def purchase_window(window):
+    for w in window.winfo_children(): w.destroy()
+    window.title('Zakup leków')
+    window.geometry('800x500')
+
+    top = Frame(window)
+    top.pack(fill=X, padx=10, pady=10)
+    Button(top, text='Powrót', command=lambda: admin_window(window), width=10).pack(side=RIGHT)
+    Label(top, text='Dostępne leki:', font=('Arial', 12, 'bold')).pack(side=LEFT)
+
+    btn_add = Button(top, text='Dodaj nowy lek', command=lambda: add_drug())
+    btn_add.pack(side=LEFT, padx=5)
+    btn_inc = Button(top, text='Zwiększ ilość', command=lambda: increase_packages())
+    btn_inc.pack(side=LEFT, padx=5)
+    btn_del = Button(top, text='Usuń lek', command=lambda: delete_drug())
+    btn_del.pack(side=LEFT, padx=5)
+
+    ttk.Separator(window, orient='horizontal').pack(fill=X, padx=10, pady=5)
+
+    bottom = Frame(window)
+    bottom.pack(fill=BOTH, expand=True, padx=10, pady=5)
+
+    cols = ['ID', 'DRUG', 'ON_RECEPT', 'NO_PACKAGES_AVAILABLE', 'DATE']
+    tree = ttk.Treeview(bottom, columns=cols, show='headings')
+    for c in cols:
+        tree.heading(c, text=c)
+        tree.column(c, width=140, anchor=W)
+    vsb = Scrollbar(bottom, orient=VERTICAL, command=tree.yview)
+    tree.configure(yscrollcommand=vsb.set)
+    vsb.pack(side=RIGHT, fill=Y)
+    tree.pack(fill=BOTH, expand=True)
+
+    def populate_drugs():
+        df = get_drug_data()
+        for i in tree.get_children(): tree.delete(i)
+        for _, r in df.iterrows():
+            tree.insert('', END, values=(r['ID'], r['DRUG'], r['ON_RECEPT'], r['NO_PACKAGES_AVAILABLE'], r['DATE']))
+
+    def add_drug():
+        popup = Toplevel(window)
+        popup.title('Dodaj lek')
+        popup.geometry('300x300')
+        var_drug = StringVar(); var_recept = StringVar(); var_packages = StringVar(); var_date = StringVar()
+        Label(popup, text='Nazwa leku').pack(pady=5)
+        Entry(popup, textvariable=var_drug).pack(pady=5)
+        Label(popup, text='Radio Batony').pack(pady=5)
+        rb_frame = Frame(popup); rb_frame.pack(pady=5)
+        Radiobutton(rb_frame, text='Tak', variable=var_recept, value=True).pack(side=LEFT)
+        Radiobutton(rb_frame, text='Nie', variable=var_recept, value=False).pack(side=LEFT)
+        Label(popup, text='Dostępne opakowania').pack(pady=5)
+        Entry(popup, textvariable=var_packages).pack(pady=5)
+        Label(popup, text='Data (YYYY-MM-DD)').pack(pady=5)
+        Entry(popup, textvariable=var_date).pack(pady=5)
+        def save_new():
+            new_id = len(tree.get_children()) + 1
+            val = 'Tak' if var_recept.get() else 'Nie'
+            tree.insert('', END, values=(new_id, var_drug.get(), val, int(var_packages.get()), var_date.get()))
+            popup.destroy()
+        Button(popup, text='Zapisz', command=save_new).pack(pady=10)
+
+    def increase_packages():
+        sel = tree.focus()
+        if not sel: return
+        vals = list(tree.item(sel)['values'])
+        popup = Toplevel(window)
+        popup.title('Zwiększ ilość opakowań')
+        popup.geometry('250x200')
+        var_inc = StringVar()
+        Label(popup, text=f"Lek: {vals[1]}").pack(pady=5)
+        Label(popup, text='Ile dodać:').pack(pady=5)
+        Entry(popup, textvariable=var_inc).pack(pady=5)
+        def save_inc():
+            try:
+                inc = int(var_inc.get())
+                vals[3] = int(vals[3]) + inc
+                tree.item(sel, values=vals)
+            except ValueError:
+                pass
+            popup.destroy()
+        Button(popup, text='Zapisz', command=save_inc).pack(pady=10)
+
+    def delete_drug():
+        sel = tree.focus()
+        if sel:
+            tree.delete(sel)
+
+    populate_drugs()
+
 
 # Panel użytkownika
 
