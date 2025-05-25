@@ -7,6 +7,7 @@ import globals
 from tkinter import *
 from tkinter import ttk
 from tkinter import END
+from tkinter import messagebox
 
 drugsDf = pd.read_excel(globals.DRUGS_DB, dtype=str)
 customersDf = pd.read_csv(globals.CUSTOMERS_DB, dtype=str)
@@ -45,7 +46,7 @@ def runMainWindow():
         selectedItem = customersListTree.selection()
         if selectedItem:
             item_id = selectedItem[0]
-            values = customersListTree.item(item_id, "values")
+            values = customersListTree.item(item_id, 'values')
             ## Filling entry values for selected customer
             address = customers.findAddress(addressDf, values[0])
             for j, k in enumerate(list(currentEntryValues.keys())[:4]):
@@ -63,7 +64,6 @@ def runMainWindow():
     def refreshTree():
         global customersDf, addressDf
         for row in customersListTree.get_children():
-            print(row)
             customersListTree.delete(row)
         for customer in listCustomers(customersDf):
             customersListTree.insert('', 'end', values=[customer[column] for column in customersTreeColumns])
@@ -83,28 +83,30 @@ def runMainWindow():
         global addressDf
         ## TODO: Select the customer back
         refreshInputDict()
-        if not addNew:
-            #customersDf, addressDf = (
-            customers.updateCustomer(customersDf, addressDf,
-                identifier = currentEntryValues['ID'],
-                name = currentEntryValues['NAME'],
-                email = currentEntryValues['E-MAIL'],
-                phone = currentEntryValues['PHONE'],
-                street = currentEntryValues['STREET'],
-                city = currentEntryValues['CITY'],
-                country = currentEntryValues['COUNTRY']
-            )
+        if currentEntryValues['NAME'] != '':
+            if not addNew:
+                #customersDf, addressDf = (
+                customers.updateCustomer(customersDf, addressDf,
+                    identifier = currentEntryValues['ID'],
+                    name = currentEntryValues['NAME'],
+                    email = currentEntryValues['E-MAIL'],
+                    phone = currentEntryValues['PHONE'],
+                    street = currentEntryValues['STREET'],
+                    city = currentEntryValues['CITY'],
+                    country = currentEntryValues['COUNTRY']
+                )
+            else:
+                customers.addCustomer(customersDf, addressDf,
+                    identifier = currentEntryValues['ID'],
+                    name=currentEntryValues['NAME'],
+                    email=currentEntryValues['E-MAIL'],
+                    phone=currentEntryValues['PHONE'],
+                    street=currentEntryValues['STREET'],
+                    city=currentEntryValues['CITY'],
+                    country=currentEntryValues['COUNTRY']
+                )
         else:
-            customers.addCustomer(customersDf, addressDf,
-                identifier = currentEntryValues['ID'],
-                name=currentEntryValues['NAME'],
-                email=currentEntryValues['E-MAIL'],
-                phone=currentEntryValues['PHONE'],
-                street=currentEntryValues['STREET'],
-                city=currentEntryValues['CITY'],
-                country=currentEntryValues['COUNTRY']
-            )
-            print(addressDf)
+            messagebox.showerror('Error', 'Proszę podać poprawne dane klienta.')
         refreshTree()
     def removeSelectedCustomer():
         global customersDf, addressDf
@@ -114,21 +116,68 @@ def runMainWindow():
         refreshTree()
     def onReceptClicked(choice):
         rSelected.set(choice)
-        # Update buttons' relief to show which is pressed
-        if choice == "Yes":
+        if choice == "YES":
             btnYes.config(relief='sunken')
             btnNo.config(relief='raised')
         else:
             btnYes.config(relief='raised')
             btnNo.config(relief='sunken')
+    def addNewDrug():
+        global drugsDf
+        ## TODO: Sanitize inputs???
+        drugName = entries2[0].get().upper()
+        if drugName == '':
+            messagebox.showerror('Error', 'Proszę podać właściwą nazwę leku.')
+        drugBool = rSelected.get()
+        try:
+            drugQty = str(int(entries2[1].get()))
+            if drugName != '':
+                drugs.addDrug(drugsDf, drugName, drugBool, drugQty)
+        except ValueError:
+            messagebox.showerror('Error', 'Proszę podać właściwą ilość leku na stanie.')
+        refreshDTree()
+    def removeDrug():
+        ## TODO: exception handling when removing sometimes and adding after removing all
+        global drugsDf
+        selectedDrug = drugsListTree.selection()[0]
+        selectedDrugID = drugsListTree.item(selectedDrug, 'values')[0]
+        drugs.removeDrug(drugsDf, identifier=int(selectedDrugID))
+        refreshDTree()
+    def removeByParam(drug=False):
+        global customersDf, addressDf
+        topWindow = Toplevel(mainWindow)
+        topWindow.title('Usuwanie po parametrze')
+        topWindow.geometry('300x200')
 
+        Label(topWindow, text='ID:').pack(pady=10)
+        entry1 = Entry(topWindow)
+        entry1.pack()
+
+        Label(topWindow, text='Imie / Nazwa').pack(pady=10)
+        entry2 = Entry(topWindow)
+        entry2.pack()
+        def submit():
+            try:
+                value1 = int(entry1.get())
+                value2 = entry2.get()
+                if value1 == '':
+                    customers.removeCustomer(customersDf, addressDf, name=value2)
+                elif value2 == '':
+                    customers.removeCustomer(customersDf, addressDf, identifier=value1)
+                else:
+                    messagebox.showerror('Error', 'Wypełnij jedno z dwóch pól.')
+            except ValueError:
+                messagebox.showerror('Error', 'Nie znaleziono klienta.')
+            refreshTree()
+            topWindow.destroy()
+        Button(topWindow, text="Ok", command=submit).pack(pady=20)
     mainWindow = Tk()
     mainWindow.geometry('1024x768')
 
 
     #### Customers Tree List
     customersTreeColumns = ['ID', 'Name', 'E-Mail', 'Phone']
-    customersListTree = ttk.Treeview(mainWindow, columns=customersTreeColumns, show='headings', height=5)
+    customersListTree = ttk.Treeview(mainWindow, columns=customersTreeColumns, show='headings', height=8)
     for col in customersTreeColumns:
         customersListTree.heading(col, text=col)
         customersListTree.column(col, anchor='center', width=200)
@@ -138,19 +187,9 @@ def runMainWindow():
     customersListTree.grid(row=0, column=0, sticky='nsew')
     customersTreeScroll.grid(row=0, column=1, sticky='ns')
 
-    #### Customers Edit Buttons
-    cButtonsFrame = Frame(mainWindow)
-    cButtonsFrame.grid(row=1, column=0, pady=10)
-    btnAdd = Button(cButtonsFrame, text='Dodaj', command=lambda: saveCustomer(addNew=True))
-    btnEdit = Button(cButtonsFrame, text='Edytuj', command=saveCustomer)
-    btnDelete = Button(cButtonsFrame, text='Usun', command=removeSelectedCustomer)
-    btnAdd.pack(side='left', padx=5)
-    btnEdit.pack(side='left', padx=5)
-    btnDelete.pack(side='left', padx=5)
-
     #### Customers Data Editing
     entryFrame = Frame(mainWindow)
-    entryFrame.grid(row=2, column=0, pady=10)
+    entryFrame.grid(row=1, column=0, pady=10)
     entries = []
     ## TODO: Maybe add a hovering tooltip to remind that ID is ignored when registering a new user
     entryNames = ['ID', 'Name', 'E-Mail', 'Phone', 'Street', 'City', 'Country']
@@ -166,9 +205,21 @@ def runMainWindow():
 
         entries.append(entry)
 
+    #### Customers Edit Buttons
+    cButtonsFrame = Frame(mainWindow)
+    cButtonsFrame.grid(row=2, column=0, pady=10)
+    btnAdd = Button(cButtonsFrame, text='Dodaj', command=lambda: saveCustomer(addNew=True))
+    btnEdit = Button(cButtonsFrame, text='Edytuj', command=saveCustomer)
+    btnDelete = Button(cButtonsFrame, text='Usuń', command=removeSelectedCustomer)
+    btnDeleteByParam = Button(cButtonsFrame, text='Usuń po parametrze', command=removeByParam)
+    btnAdd.pack(side='left', padx=5)
+    btnEdit.pack(side='left', padx=5)
+    btnDelete.pack(side='left', padx=5)
+    btnDeleteByParam.pack(side='left', padx=5)
+
     #### Drug Tree
     drugsTreeColumns = ['ID', 'Drug', 'On Recept', 'Packages Available']
-    drugsListTree = ttk.Treeview(mainWindow, columns=drugsTreeColumns, show='headings', height=5)
+    drugsListTree = ttk.Treeview(mainWindow, columns=drugsTreeColumns, show='headings', height=8)
     for col in drugsTreeColumns:
         drugsListTree.heading(col, text=col)
         drugsListTree.column(col, anchor='center', width=200)
@@ -183,7 +234,7 @@ def runMainWindow():
     entryFrame2.grid(row=4, column=0, ipady=10)
     entries2 = []
     entryNames2 = ['Drug', 'On Recept', 'Packages Available']
-    rSelected = StringVar(value="NO")
+    rSelected = StringVar(value='NO')
 
     for name in entryNames2:
         subframe = ttk.Frame(entryFrame2)
@@ -194,33 +245,35 @@ def runMainWindow():
 
         if name == 'On Recept':
             # Create a frame to hold the two buttons side by side
-            button_frame = ttk.Frame(subframe)
-            button_frame.pack()
+            buttonFrame = ttk.Frame(subframe)
+            buttonFrame.pack()
 
-            btnYes = Button(button_frame, text="Tak", command=lambda: onReceptClicked("Yes"))
-            btnNo = Button(button_frame, text="Nie", command=lambda: onReceptClicked("No"))
+            btnYes = Button(buttonFrame, text="Tak", command=lambda: onReceptClicked('YES'))
+            btnNo = Button(buttonFrame, text="Nie", command=lambda: onReceptClicked('NO'))
             btnYes.pack(side='left', padx=4)
             btnNo.pack(side='left', padx=4)
 
             btnYes.config(relief='raised')
             btnNo.config(relief='sunken')
-
         else:
             entry = ttk.Entry(subframe, width=16)
             entry.pack()
             entries2.append(entry)
 
     #### Drug Edit Buttons
+    ## TODO: Add drug qty editing
     dButtonsFrame = Frame(mainWindow)
     dButtonsFrame.grid(row=5, column=0)
-    btnAdd2 = Button(dButtonsFrame, text='Dodaj')
-    btnDelete2 = Button(dButtonsFrame, text='Usun')
+    btnAdd2 = Button(dButtonsFrame, text='Dodaj', command=addNewDrug)
+    btnDelete2 = Button(dButtonsFrame, text='Usuń', command=removeDrug)
+    btnDeleteByParam2 = Button(dButtonsFrame, text='Usuń po parametrze', command=lambda: removeByParam(True))
     btnAdd2.pack(side='left', padx=5)
     btnDelete2.pack(side='left', padx=5)
+    btnDeleteByParam2.pack(side='left', padx=5)
 
     # mainWindow.bind('<Configure>', updateFrameSize(frame=mainFrame))
-    customersListTree.bind("<<TreeviewSelect>>", onTreeSelect)
-    customersListTree.bind("<Button-3>", clearSelection)
+    customersListTree.bind('<<TreeviewSelect>>', onTreeSelect)
+    customersListTree.bind('<Button-3>', clearSelection)
     mainWindow.mainloop()
 
 def runLoginWindow():

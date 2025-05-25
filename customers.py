@@ -2,6 +2,7 @@ import pandas as pd
 import globals
 from datetime import date
 import random
+from tkinter import messagebox
 
 customersDf = pd.read_csv(globals.CUSTOMERS_DB, dtype=str)
 addressDf = pd.read_csv(globals.ADDRESS_DB, dtype=str)
@@ -63,7 +64,7 @@ def removeCustomer(cdf, adf, identifier='', name=''):
         # no id or name to delete
         raise Exception
     if i.size == 0:
-        print('No customer found')
+        raise ValueError('Error: Customer not found.')
     else:
         cdf.drop(i, inplace=True)
         adf.drop(i, inplace=True)
