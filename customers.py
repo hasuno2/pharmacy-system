@@ -72,18 +72,20 @@ def removeCustomer(cdf, adf, identifier='', name=''):
 def updateCustomer(cdf, adf, identifier, **kwargs):
     for arg, value in kwargs.items():
         column = columnMap[arg] # possible exception
+        # print(arg, value, column)
+        # print(cdf, column)
         if column:
             if column in cdf.columns:
                 cdf.loc[cdf['ID'] == str(identifier), column] = value
             elif column in addressDf.columns:
-                adf.loc[addressDf['ID'] == str(identifier), column] = value
+                adf.loc[adf['ID'] == str(identifier), column] = value
             else:
                 # not possible I think
                 raise Exception
         else:
             print(f'Warning: Column name "{arg}" is not present in {globals.CUSTOMERS_DB} or {globals.ADDRESS_DB}.')
     cdf.loc[cdf['ID'] == str(identifier), 'UPDATED'] = dateToday
-
+    # return cdf, adf
 
 def findAddress(adf, identifier):
     result = {}
