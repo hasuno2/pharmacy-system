@@ -1,291 +1,310 @@
 from tkinter import *
 from tkinter import ttk
-import pandas as pd
 from datetime import datetime
+import pandas as pd
+import customers
+import drugs
 
-# Wspólna funkcja placeholder
-def set_placeholder(entry, placeholder_text, is_password=False):
-    entry.insert(0, placeholder_text)
-    entry.config(fg='gray')
+# Przechowywanie informacji o aktualnym użytkowniku
+default_user = {'ID': None, 'NAME': None, 'ROLE': None}
+current_user = default_user.copy()
+
+# Funkcja placeholder
+def set_placeholder(entry_widget, placeholder_text, is_password=False):
+    entry_widget.insert(0, placeholder_text)
+    entry_widget.config(fg='gray')
     def on_focus_in(event):
-        if entry.get() == placeholder_text:
-            entry.delete(0, 'end')
-            entry.config(fg='black')
+        if entry_widget.get() == placeholder_text:
+            entry_widget.delete(0, 'end')
+            entry_widget.config(fg='black')
             if is_password:
-                entry.config(show='*')
+                entry_widget.config(show='*')
     def on_focus_out(event):
-        if not entry.get():
-            entry.insert(0, placeholder_text)
-            entry.config(fg='gray')
+        if not entry_widget.get():
+            entry_widget.insert(0, placeholder_text)
+            entry_widget.config(fg='gray')
             if is_password:
-                entry.config(show='')
-    entry.bind('<FocusIn>', on_focus_in)
-    entry.bind('<FocusOut>', on_focus_out)
+                entry_widget.config(show='')
+    entry_widget.bind('<FocusIn>', on_focus_in)
+    entry_widget.bind('<FocusOut>', on_focus_out)
 
-# Dane przykładowe
-def get_data(search_term=None):
-    data = [
-        {'ID': 1, 'NAME': 'Alice', 'E-MAIL': 'alice@example.com', 'PHONE': '555-1234', 'CREATED': '2024-01-01', 'UPDATED': '2024-06-01'},
-        {'ID': 2, 'NAME': 'Bob',   'E-MAIL': 'bob@example.com',   'PHONE': '555-5678', 'CREATED': '2024-02-15', 'UPDATED': '2024-06-03'},
-        {'ID': 3, 'NAME': 'Carol', 'E-MAIL': 'carol@example.com', 'PHONE': '555-9012', 'CREATED': '2024-03-20', 'UPDATED': '2024-06-05'}
-    ]
-    df = pd.DataFrame(data)
-    if search_term:
-        return df[df['NAME'].str.contains(search_term, case=False, na=False)]
-    return df
+# Rejestracja użytkownika
+def registration_window(main_window):
+    for widget in main_window.winfo_children():
+        widget.destroy()
+    main_window.title("Rejestracja")
+    registration_frame = Frame(main_window)
+    registration_frame.place(relx=0.5, rely=0.5, anchor=CENTER)
 
-# Przykładowe źródło leków
-def get_drug_data():
-    data = [
-        {'ID': 1, 'DRUG': 'Aspiryna', 'ON_RECEPT': True, 'NO_PACKAGES_AVAILABLE': 10, 'DATE': '2025-05-01'},
-        {'ID': 2, 'DRUG': 'Paracetamol', 'ON_RECEPT': False, 'NO_PACKAGES_AVAILABLE': 5, 'DATE': '2025-04-15'}
-    ]
-    return pd.DataFrame(data)
+    first_name_var = StringVar()
+    last_name_var = StringVar()
+    login_var = StringVar()
+    password_var = StringVar()
 
-# Ekran logowania
-def logowanie(login, password):
-    # Tymczasowy warunek wyboru roli
-    tymczasowa = True
-    if not tymczasowa:
-        user_window(window, login)
-    else:
-        admin_window(window)
+    Label(registration_frame, text="Imię").grid(row=0, column=0, padx=10, pady=5)
+    first_name_entry = Entry(registration_frame, textvariable=first_name_var)
+    first_name_entry.grid(row=0, column=1, padx=10, pady=5)
+    set_placeholder(first_name_entry, "Wpisz imię")
 
-def login_window(window):
-    for widget in window.winfo_children(): widget.destroy()
-    frame_login = Frame(window)
-    frame_login.place(relx=0.5, rely=0.5, anchor=CENTER)
+    Label(registration_frame, text="Nazwisko").grid(row=1, column=0, padx=10, pady=5)
+    last_name_entry = Entry(registration_frame, textvariable=last_name_var)
+    last_name_entry.grid(row=1, column=1, padx=10, pady=5)
+    set_placeholder(last_name_entry, "Wpisz nazwisko")
 
-    login = StringVar()
-    haslo = StringVar()
+    Label(registration_frame, text="Login").grid(row=2, column=0, padx=10, pady=5)
+    login_entry = Entry(registration_frame, textvariable=login_var)
+    login_entry.grid(row=2, column=1, padx=10, pady=5)
+    set_placeholder(login_entry, "Wpisz login")
 
-    Label(frame_login, text="Login").grid(row=0, column=0, padx=10, pady=5)
-    entry_login = Entry(frame_login, textvariable=login)
-    entry_login.grid(row=0, column=1, padx=10, pady=5)
-    set_placeholder(entry_login, "Wpisz login")
+    Label(registration_frame, text="Hasło").grid(row=3, column=0, padx=10, pady=5)
+    password_entry = Entry(registration_frame, textvariable=password_var)
+    password_entry.grid(row=3, column=1, padx=10, pady=5)
+    set_placeholder(password_entry, "Wpisz hasło", is_password=True)
 
-    Label(frame_login, text="Hasło").grid(row=1, column=0, padx=10, pady=5)
-    entry_haslo = Entry(frame_login, textvariable=haslo)
-    entry_haslo.grid(row=1, column=1, padx=10, pady=5)
-    set_placeholder(entry_haslo, "Wpisz hasło", is_password=True)
+    def register_user():
+        login_window(main_window)
 
-    Button(frame_login, text="Logowanie", command=lambda: logowanie(login.get(), haslo.get())).grid(row=2, column=0, columnspan=2, pady=10)
-    Button(frame_login, text="Rejestracja", command=lambda: registration_window(window)).grid(row=3, column=0, columnspan=2)
+    Button(registration_frame, text="Rejestruj", command=register_user).grid(row=4, column=0, columnspan=2, pady=10)
+    Button(registration_frame, text="Powrót", command=lambda: login_window(main_window)).grid(row=5, column=0, columnspan=2)
 
-# Ekran rejestracji
-def rejestracja_placehold(imie, nazwisko, user, password):
-    print(f"Rejestracja: {imie}, {nazwisko}, {user}, {password}")
+# Okno logowania
+def login_window(main_window):
+    for widget in main_window.winfo_children():
+        widget.destroy()
+    main_window.title("Logowanie")
+    login_frame = Frame(main_window)
+    login_frame.place(relx=0.5, rely=0.5, anchor=CENTER)
 
-def registration_window(window):
-    for widget in window.winfo_children(): widget.destroy()
-    frame_registration = Frame(window)
-    frame_registration.place(relx=0.5, rely=0.5, anchor=CENTER)
+    Label(login_frame, text="Login").grid(row=0, column=0, padx=10, pady=5)
+    email_entry = Entry(login_frame)
+    email_entry.grid(row=0, column=1, padx=10, pady=5)
+    set_placeholder(email_entry, "Wpisz login")
 
-    imie = StringVar()
-    nazwisko = StringVar()
-    email = StringVar()
-    haslo = StringVar()
+    Label(login_frame, text="Hasło").grid(row=1, column=0, padx=10, pady=5)
+    password_entry = Entry(login_frame)
+    password_entry.grid(row=1, column=1, padx=10, pady=5)
+    set_placeholder(password_entry, "Wpisz hasło", is_password=True)
 
-    Label(frame_registration, text="Rejestracja", font=("Helvetica", 20, "bold")).grid(row=0, column=0, columnspan=2, pady=(0,20))
-    Label(frame_registration, text="Imię").grid(row=1, column=0, padx=10, pady=5)
-    entry_imie = Entry(frame_registration, textvariable=imie)
-    entry_imie.grid(row=1, column=1, padx=10, pady=5)
-    set_placeholder(entry_imie, "Wpisz imię")
+    def attempt_login():
+        entered_email = email_entry.get()
+        entered_password = password_entry.get()
+        # Admin
+        if entered_email == 'admin' and entered_password == 'admin':
+            current_user.update({'ID': None, 'NAME': 'Admin', 'ROLE': 'admin'})
+            admin_window(main_window)
+        else:
+            # zwykły użytkownik: logowanie przez email i hasło = ID
+            customers_df = customers.customersDf
+            user_record = customers_df[customers_df['E-MAIL'] == entered_email]
+            if not user_record.empty:
+                retrieved_id = user_record.iloc[0]['ID']
+                if entered_password == str(retrieved_id):
+                    current_user.update({'ID': retrieved_id, 'NAME': user_record.iloc[0]['NAME'], 'ROLE': 'user'})
+                    user_window(main_window)
+                    return
+            print("Błędne dane logowania")
 
-    Label(frame_registration, text="Nazwisko").grid(row=2, column=0, padx=10, pady=5)
-    entry_nazwisko = Entry(frame_registration, textvariable=nazwisko)
-    entry_nazwisko.grid(row=2, column=1, padx=10, pady=5)
-    set_placeholder(entry_nazwisko, "Wpisz nazwisko")
+    Button(login_frame, text="Logowanie", command=attempt_login).grid(row=2, column=0, columnspan=2, pady=5)
+    Button(login_frame, text="Rejestracja", command=lambda: registration_window(main_window)).grid(row=3, column=0, columnspan=2)
 
-    Label(frame_registration, text="Email").grid(row=3, column=0, padx=10, pady=5)
-    entry_email = Entry(frame_registration, textvariable=email)
-    entry_email.grid(row=3, column=1, padx=10, pady=5)
-    set_placeholder(entry_email, "Wpisz Email")
+# Okno użytkownika
+def user_window(main_window):
+    for widget in main_window.winfo_children():
+        widget.destroy()
+    user_frame = Frame(main_window, padx=20, pady=20)
+    user_frame.pack(fill=BOTH, expand=True)
 
-    Label(frame_registration, text="Hasło").grid(row=4, column=0, padx=10, pady=5)
-    entry_haslo = Entry(frame_registration, textvariable=haslo)
-    entry_haslo.grid(row=4, column=1, padx=10, pady=5)
-    set_placeholder(entry_haslo, "Wpisz hasło", is_password=True)
+    Label(user_frame, text=f"Witaj, {current_user['NAME']}!", font=("Arial",16)).grid(row=0, column=0, sticky=W)
+    Button(user_frame, text="Wyloguj", width=12, command=lambda: logout(main_window)).grid(row=0, column=1, sticky=E, padx=10)
+    user_frame.grid_columnconfigure(0, weight=1)
+    user_frame.grid_columnconfigure(1, weight=1)
 
-    Button(frame_registration, text="Rejestracja", command=lambda: rejestracja_placehold(imie.get(), nazwisko.get(), email.get(), haslo.get())).grid(row=5, column=0, columnspan=2, pady=10)
-    Button(frame_registration, text="Logowanie", command=lambda: login_window(window)).grid(row=6, column=0, columnspan=2)
+    Button(user_frame, text="Zakup leków →", font=("Arial",14), relief=RAISED, bd=3, padx=10, pady=5,
+           command=lambda: purchase_window(main_window)).grid(row=1, column=0, columnspan=2, pady=(30,0))
 
 # Panel admina
-def get_admin_name(): return "Jan"
+def admin_window(main_window):
+    for widget in main_window.winfo_children():
+        widget.destroy()
+    admin_top_frame = Frame(main_window)
+    admin_top_frame.pack(fill='x', padx=10, pady=10)
+    Label(admin_top_frame, text=f"Witaj, {current_user['NAME']}!", font=("Arial",14)).pack(side=LEFT)
+    Button(admin_top_frame, text="Wyloguj", command=lambda: logout(main_window), width=10, bg="lightgray").pack(side=RIGHT)
 
-def admin_window(window):
-    for w in window.winfo_children(): w.destroy()
-    frame_top = Frame(window)
-    frame_top.pack(fill="x", padx=10, pady=10)
+    separator = Frame(main_window, height=2, bg="gray")
+    separator.pack(fill='x', padx=10, pady=(0,20))
 
-    Label(frame_top, text=f"Witaj, {get_admin_name()}!", font=("Arial",14)).pack(side=LEFT)
-    Button(frame_top, text="Wyloguj", command=lambda: login_window(window), width=10, bg="lightgray").pack(side=RIGHT)
+    admin_main_frame = Frame(main_window)
+    admin_main_frame.pack(expand=True)
+    Button(admin_main_frame, text="Sprawdź wszystkich użytkowników", width=30, bg="#4CAF50", fg="white",
+           font=("Arial",12), command=lambda: admin_users_window(main_window)).pack(pady=5)
+    Button(admin_main_frame, text="Zakup leków", width=30, bg="#2196F3", fg="white",
+           font=("Arial",12), command=lambda: purchase_window(main_window)).pack(pady=5)
 
-    separator = Frame(window, height=2, bg="gray")
-    separator.pack(fill="x", padx=10, pady=(0,20))
+# Wylogowanie
+def logout(main_window):
+    global current_user
+    current_user = default_user.copy()
+    login_window(main_window)
 
-    frame_main = Frame(window)
-    frame_main.pack(expand=True)
+# Panel administracyjny użytkowników
+def admin_users_window(main_window):
+    main_window.title('Panel administracyjny użytkowników')
+    main_window.geometry('900x600')
+    for widget in main_window.winfo_children():
+        widget.destroy()
 
-    Button(frame_main, text="Sprawdź wszystkich użytkowników", width=30, bg="#4CAF50", fg="white", command=lambda: admin_users_window(window)).pack(pady=5)
-    Button(frame_main, text="Zakup leków", width=30, bg="#2196F3", fg="white", command=lambda: purchase_window(window)).pack(pady=5)
-
-# Panel administracji użytkowników
-
-def admin_users_window(window):
-    for widget in window.winfo_children(): widget.destroy()
-    window.title('Panel administracyjny użytkowników')
-    window.geometry('900x600')
-
-    top_frame = Frame(window)
-    top_frame.pack(fill=X, padx=10, pady=10)
-
-    Label(top_frame, text='Szukaj użytkownika (ID/Nazwa):').grid(row=0, column=1, sticky=W)
-    ent_search = Entry(top_frame)
-    ent_search.grid(row=0, column=2, padx=(5,20))
-    set_placeholder(ent_search, 'Wpisz nazwę...', False)
-
+    users_top_frame = Frame(main_window)
+    users_top_frame.pack(fill=X, padx=10, pady=10)
+    Label(users_top_frame, text='Szukaj użytkownika (Imię/Nazwisko):').grid(row=0, column=1, sticky=W)
+    search_entry = Entry(users_top_frame)
+    search_entry.grid(row=0, column=2, padx=(5,20))
+    set_placeholder(search_entry, 'Wpisz nazwę...')
     def on_search():
-        term = ent_search.get().strip()
-        df = get_data(None if term=='' or term=='Wpisz nazwę...' else term)
-        populate_tree(df)
-    Button(top_frame, text='Szukaj', command=on_search).grid(row=0, column=3, padx=5)
-    Button(top_frame, text='Dodaj', command=lambda: popup_form('add')).grid(row=0, column=4, padx=5)
-    Button(top_frame, text='Edytuj', command=lambda: popup_form('edit', tree.item(tree.focus())['values'] if tree.focus() else None)).grid(row=0, column=5, padx=5)
-    Button(top_frame, text='Usuń', command=lambda: tree.delete(tree.focus())).grid(row=0, column=6, padx=5)
-    Button(top_frame, text='Powrót', command=lambda: admin_window(window)).grid(row=0, column=7, sticky=E)
+        search_term = search_entry.get().strip()
+        df_copy = customers.customersDf.copy()
+        if search_term and search_term!='Wpisz nazwę...':
+            df_copy = df_copy[df_copy['NAME'].str.contains(search_term, case=False, na=False)]
+        populate(df_copy)
+    Button(users_top_frame, text='Szukaj', command=on_search).grid(row=0, column=3, padx=5)
+    Button(users_top_frame, text='Dodaj', command=lambda: popup('add')).grid(row=0, column=4, padx=5)
+    Button(users_top_frame, text='Edytuj', command=lambda: popup('edit')).grid(row=0, column=5, padx=5)
+    Button(users_top_frame, text='Usuń', command=lambda: delete_user()).grid(row=0, column=6, padx=5)
+    Button(users_top_frame, text='Powrót', command=lambda: admin_window(main_window)).grid(row=0, column=7, sticky=E)
 
-    ttk.Separator(window, orient='horizontal').pack(fill=X, padx=10, pady=5)
-    bottom = Frame(window)
-    bottom.pack(fill=BOTH, expand=True, padx=10, pady=5)
+    ttk.Separator(main_window, orient='horizontal').pack(fill=X, padx=10, pady=5)
+    users_bottom_frame = Frame(main_window)
+    users_bottom_frame.pack(fill=BOTH, expand=True, padx=10, pady=5)
     cols = ['ID','NAME','E-MAIL','PHONE','CREATED','UPDATED']
-    tree = ttk.Treeview(bottom, columns=cols, show='headings')
-    for c in cols: tree.heading(c, text=c); tree.column(c, width=130, anchor=W)
-    vsb = Scrollbar(bottom, orient=VERTICAL, command=tree.yview)
-    tree.configure(yscrollcommand=vsb.set); vsb.pack(side=RIGHT, fill=Y); tree.pack(fill=BOTH, expand=True)
+    user_tree = ttk.Treeview(users_bottom_frame, columns=cols, show='headings')
+    for col in cols:
+        user_tree.heading(col, text=col);
+        user_tree.column(col, width=130, anchor=W)
+    vsb = Scrollbar(users_bottom_frame, orient=VERTICAL, command=user_tree.yview)
+    user_tree.configure(yscrollcommand=vsb.set);
+    vsb.pack(side=RIGHT, fill=Y);
+    user_tree.pack(fill=BOTH, expand=True)
 
-    def populate_tree(df):
-        for i in tree.get_children(): tree.delete(i)
-        for _,r in df.iterrows(): tree.insert('', END, values=tuple(r[c] for c in cols))
+    def populate(df):
+        for item in user_tree.get_children():
+            user_tree.delete(item)
+        for _, row in df.iterrows():
+            user_tree.insert('', END, values=(row['ID'],row['NAME'],row['E-MAIL'],row['PHONE'],row['CREATED'],row['UPDATED']))
 
-    def popup_form(mode, vals=None):
-        p = Toplevel(window); p.title('Edycja użytkownika' if mode=='edit' else 'Dodaj użytkownika'); p.geometry('400x300')
-        n,e,ph = StringVar(),StringVar(),StringVar()
-        Label(p, text='Imię i nazwisko').pack(pady=5); Entry(p, textvariable=n).pack(pady=5)
-        Label(p, text='Email').pack(pady=5); Entry(p, textvariable=e).pack(pady=5)
-        Label(p, text='Telefon').pack(pady=5); Entry(p, textvariable=ph).pack(pady=5)
-        if mode=='edit' and vals: n.set(vals[1]); e.set(vals[2]); ph.set(vals[3])
-        def save():
-            now=datetime.now().strftime('%Y-%m-%d')
-            if mode=='add': nid=len(tree.get_children())+1; tree.insert('', END, values=(nid,n.get(),e.get(),ph.get(),now,now))
-            else: s=tree.focus(); tree.item(s, values=(vals[0],n.get(),e.get(),ph.get(),vals[4],now))
-            p.destroy()
-        Button(p, text='Zapisz', command=save).pack(pady=10)
+    def popup(mode):
+        selection = user_tree.focus()
+        values = user_tree.item(selection)['values'] if selection else None
+        popup_window = Toplevel(main_window)
+        popup_window.title('Edycja' if mode=='edit' else 'Dodaj użytkownika')
+        popup_window.geometry('400x300')
+        fields = ['NAME','E-MAIL','PHONE']
+        vars_dict = {f: StringVar() for f in fields}
+        for field in fields:
+            Label(popup_window, text=field).pack(pady=5)
+            Entry(popup_window, textvariable=vars_dict[field]).pack(pady=5)
+            if mode=='edit' and values:
+                vars_dict[field].set(values[cols.index(field)])
+        def save_user():
+            if mode=='add':
+                customers.addCustomer(customers.customersDf, customers.addressDf,
+                                      vars_dict['NAME'].get(), email=vars_dict['E-MAIL'].get(), phone=vars_dict['PHONE'].get())
+            else:
+                customers.updateCustomer(customers.customersDf, customers.addressDf,
+                                         identifier=values[0], name=vars_dict['NAME'].get(),
+                                         email=vars_dict['E-MAIL'].get(), phone=vars_dict['PHONE'].get())
+            populate(customers.customersDf)
+            popup_window.destroy()
+        Button(popup_window, text='Zapisz', command=save_user).pack(pady=10)
 
-    populate_tree(get_data())
+    def delete_user():
+        selected = user_tree.focus()
+        if selected:
+            delete_id = user_tree.item(selected)['values'][0]
+            customers.removeCustomer(customers.customersDf, customers.addressDf, identifier=delete_id)
+            populate(customers.customersDf)
 
-#zakup leków i dodawanie nowych
-def purchase_window(window):
-    for w in window.winfo_children(): w.destroy()
-    window.title('Zakup leków')
-    window.geometry('800x500')
+    populate(customers.customersDf.copy())
 
-    top = Frame(window)
-    top.pack(fill=X, padx=10, pady=10)
-    Button(top, text='Powrót', command=lambda: admin_window(window), width=10).pack(side=RIGHT)
-    Label(top, text='Dostępne leki:', font=('Arial', 12, 'bold')).pack(side=LEFT)
+# Panel zakupów leków
+def purchase_window(main_window):
+    main_window.title('Zakup leków')
+    main_window.geometry('800x500')
+    for widget in main_window.winfo_children():
+        widget.destroy()
+    purchase_top_frame = Frame(main_window)
+    purchase_top_frame.pack(fill=X, padx=10, pady=10)
+    Button(purchase_top_frame, text='Powrót', command=lambda: admin_window(main_window) if current_user['ROLE']=='admin' else user_window(main_window), width=10).pack(side=RIGHT)
+    Label(purchase_top_frame, text='Dostępne leki:', font=('Arial',12,'bold')).pack(side=LEFT)
+    add_drug_btn = Button(purchase_top_frame, text='Dodaj nowy lek', command=lambda: add_drug())
+    add_drug_btn.pack(side=LEFT, padx=5)
+    delete_drug_btn = Button(purchase_top_frame, text='Usuń lek', command=lambda: del_drug())
+    delete_drug_btn.pack(side=LEFT, padx=5)
 
-    btn_add = Button(top, text='Dodaj nowy lek', command=lambda: add_drug())
-    btn_add.pack(side=LEFT, padx=5)
-    btn_inc = Button(top, text='Zwiększ ilość', command=lambda: increase_packages())
-    btn_inc.pack(side=LEFT, padx=5)
-    btn_del = Button(top, text='Usuń lek', command=lambda: delete_drug())
-    btn_del.pack(side=LEFT, padx=5)
+    ttk.Separator(main_window, orient='horizontal').pack(fill=X, padx=10, pady=5)
+    purchase_bottom_frame = Frame(main_window)
+    purchase_bottom_frame.pack(fill=BOTH, expand=True, padx=10, pady=5)
+    cols = ['ID','DRUG','ON_RECEPT','NO_PACKAGES_AVAILABLE','DATE']
+    drug_tree = ttk.Treeview(purchase_bottom_frame, columns=cols, show='headings')
+    for column in cols:
+        drug_tree.heading(column, text=column);
+        drug_tree.column(column, width=140, anchor=W)
+    vsb_drug = Scrollbar(purchase_bottom_frame, orient=VERTICAL, command=drug_tree.yview)
+    drug_tree.configure(yscrollcommand=vsb_drug.set);
+    vsb_drug.pack(side=RIGHT, fill=Y);
+    drug_tree.pack(fill=BOTH, expand=True)
 
-    ttk.Separator(window, orient='horizontal').pack(fill=X, padx=10, pady=5)
+    def parse_drugs_df():
+        raw_df = drugs.drugsDf.copy()
+        first_col = raw_df.columns[0]
+        parsed_df = raw_df[first_col].str.split(',', expand=True)
+        parsed_df.columns = ['ID','DRUG','ON_RECEPT','NO_PACKAGES_AVAILABLE','DATE']
+        return parsed_df
 
-    bottom = Frame(window)
-    bottom.pack(fill=BOTH, expand=True, padx=10, pady=5)
-
-    cols = ['ID', 'DRUG', 'ON_RECEPT', 'NO_PACKAGES_AVAILABLE', 'DATE']
-    tree = ttk.Treeview(bottom, columns=cols, show='headings')
-    for c in cols:
-        tree.heading(c, text=c)
-        tree.column(c, width=140, anchor=W)
-    vsb = Scrollbar(bottom, orient=VERTICAL, command=tree.yview)
-    tree.configure(yscrollcommand=vsb.set)
-    vsb.pack(side=RIGHT, fill=Y)
-    tree.pack(fill=BOTH, expand=True)
-
-    def populate_drugs():
-        df = get_drug_data()
-        for i in tree.get_children(): tree.delete(i)
-        for _, r in df.iterrows():
-            tree.insert('', END, values=(r['ID'], r['DRUG'], r['ON_RECEPT'], r['NO_PACKAGES_AVAILABLE'], r['DATE']))
+    def populate_drugs(parsed_df=None):
+        df = parsed_df or parse_drugs_df()
+        for item in drug_tree.get_children():
+            drug_tree.delete(item)
+        for _, row in df.iterrows():
+            drug_tree.insert('', END, values=(row['ID'],row['DRUG'],row['ON_RECEPT'],row['NO_PACKAGES_AVAILABLE'],row['DATE']))
 
     def add_drug():
-        popup = Toplevel(window)
-        popup.title('Dodaj lek')
-        popup.geometry('300x300')
-        var_drug = StringVar(); var_recept = StringVar(); var_packages = StringVar(); var_date = StringVar()
-        Label(popup, text='Nazwa leku').pack(pady=5)
-        Entry(popup, textvariable=var_drug).pack(pady=5)
-        Label(popup, text='Radio Batony').pack(pady=5)
-        rb_frame = Frame(popup); rb_frame.pack(pady=5)
-        Radiobutton(rb_frame, text='Tak', variable=var_recept, value=True).pack(side=LEFT)
-        Radiobutton(rb_frame, text='Nie', variable=var_recept, value=False).pack(side=LEFT)
-        Label(popup, text='Dostępne opakowania').pack(pady=5)
-        Entry(popup, textvariable=var_packages).pack(pady=5)
-        Label(popup, text='Data (YYYY-MM-DD)').pack(pady=5)
-        Entry(popup, textvariable=var_date).pack(pady=5)
-        def save_new():
-            new_id = len(tree.get_children()) + 1
-            val = 'Tak' if var_recept.get() else 'Nie'
-            tree.insert('', END, values=(new_id, var_drug.get(), val, int(var_packages.get()), var_date.get()))
-            popup.destroy()
-        Button(popup, text='Zapisz', command=save_new).pack(pady=10)
+        add_drug_window = Toplevel(main_window)
+        add_drug_window.title('Dodaj lek')
+        add_drug_window.geometry('300x350')
+        drug_name_var = StringVar()
+        prescription_required_var = BooleanVar(value=False)
+        quantity_var = StringVar()
+        date_var = StringVar()
 
-    def increase_packages():
-        sel = tree.focus()
-        if not sel: return
-        vals = list(tree.item(sel)['values'])
-        popup = Toplevel(window)
-        popup.title('Zwiększ ilość opakowań')
-        popup.geometry('250x200')
-        var_inc = StringVar()
-        Label(popup, text=f"Lek: {vals[1]}").pack(pady=5)
-        Label(popup, text='Ile dodać:').pack(pady=5)
-        Entry(popup, textvariable=var_inc).pack(pady=5)
-        def save_inc():
-            try:
-                inc = int(var_inc.get())
-                vals[3] = int(vals[3]) + inc
-                tree.item(sel, values=vals)
-            except ValueError:
-                pass
-            popup.destroy()
-        Button(popup, text='Zapisz', command=save_inc).pack(pady=10)
+        Label(add_drug_window, text='Nazwa leku').pack(pady=5)
+        Entry(add_drug_window, textvariable=drug_name_var).pack(pady=5)
+        Label(add_drug_window, text='Na receptę').pack(pady=5)
+        prescription_frame = Frame(add_drug_window)
+        prescription_frame.pack(pady=5)
+        Radiobutton(prescription_frame, text='Tak', variable=prescription_required_var, value=True).pack(side=LEFT, padx=5)
+        Radiobutton(prescription_frame, text='Nie', variable=prescription_required_var, value=False).pack(side=LEFT, padx=5)
+        Label(add_drug_window, text='Dostępne opakowania').pack(pady=5)
+        Entry(add_drug_window, textvariable=quantity_var).pack(pady=5)
+        Label(add_drug_window, text='Data (YYYY-MM-DD)').pack(pady=5)
+        Entry(add_drug_window, textvariable=date_var).pack(pady=5)
+        date_var.set(datetime.now().strftime('%Y-%m-%d'))
 
-    def delete_drug():
-        sel = tree.focus()
-        if sel:
-            tree.delete(sel)
+        def save_new_drug():
+            on_recept_val = str(prescription_required_var.get())
+            qty_val = int(quantity_var.get())
+            drugs.addDrug(drugs.drugsDf, drug_name_var.get(), on_recept_val, qty_val)
+            populate_drugs()
+            add_drug_window.destroy()
+        Button(add_drug_window, text='Zapisz', command=save_new_drug).pack(pady=10)
+
+    def del_drug():
+        selected_item = drug_tree.focus()
+        if selected_item:
+            delete_id = drug_tree.item(selected_item)['values'][0]
+            drugs.removeDrug(drugs.drugsDf, identifier=delete_id)
+            populate_drugs()
 
     populate_drugs()
-
-
-# Panel użytkownika
-
-def open_medicine_shop(window):
-    pass
-
-def user_window(window, username):
-    for widget in window.winfo_children(): widget.destroy()
-    frame_user = Frame(window, padx=20, pady=20); frame_user.pack(fill=BOTH, expand=True)
-    Label(frame_user, text=f"Witaj, {username}!", font=("Arial",16)).grid(row=0, column=0, sticky=W)
-    Button(frame_user, text="Wyloguj", width=12, command=lambda: login_window(window)).grid(row=0, column=1, sticky=E, padx=10)
-    frame_user.grid_columnconfigure(0, weight=1); frame_user.grid_columnconfigure(1, weight=1)
-    Button(frame_user, text="Zakup leków →", font=("Arial",14), relief=RAISED, bd=3, padx=10, pady=5, command=lambda: open_medicine_shop(window)).grid(row=1, column=0, columnspan=2, pady=(30,0))
 
 # Uruchomienie aplikacji
 window = Tk()
