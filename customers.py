@@ -72,8 +72,6 @@ def removeCustomer(cdf, adf, identifier='', name=''):
 def updateCustomer(cdf, adf, identifier, **kwargs):
     for arg, value in kwargs.items():
         column = columnMap[arg] # possible exception
-        # print(arg, value, column)
-        # print(cdf, column)
         if column:
             if column in cdf.columns:
                 cdf.loc[cdf['ID'] == str(identifier), column] = value

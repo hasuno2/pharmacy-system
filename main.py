@@ -26,6 +26,11 @@ def listCustomers(cdf):
         # print(row)
         customersList.append({'ID': row['ID'], 'Name': row['NAME'], 'E-Mail': row['E-MAIL'], 'Phone': row['PHONE']})
     return customersList
+def listDrugs(ddf):
+    drugsList = []
+    for index, row in enumerate(ddf[ddf.columns[0]].str.split(',')):
+        drugsList.append({'ID': row[0], 'Drug': row[1], 'On Recept': row[2], 'Packages Available': row[3]})
+    return drugsList
 
 def runMainWindow():
     global customersDf, addressDf
@@ -58,9 +63,16 @@ def runMainWindow():
     def refreshTree():
         global customersDf, addressDf
         for row in customersListTree.get_children():
+            print(row)
             customersListTree.delete(row)
         for customer in listCustomers(customersDf):
             customersListTree.insert('', 'end', values=[customer[column] for column in customersTreeColumns])
+    def refreshDTree():
+        global drugsDf
+        for row in drugsListTree.get_children():
+            drugsListTree.delete(row)
+        for drug in listDrugs(drugsDf):
+            drugsListTree.insert('', 'end', values=[drug[column] for column in drugsTreeColumns])
     def refreshInputDict():
         global currentEntryValues
         for i, key in enumerate(list(currentEntryValues.keys())):
@@ -100,6 +112,15 @@ def runMainWindow():
         refreshInputDict()
         customers.removeCustomer(customersDf, addressDf, identifier=currentEntryValues['ID'])
         refreshTree()
+    def onReceptClicked(choice):
+        rSelected.set(choice)
+        # Update buttons' relief to show which is pressed
+        if choice == "Yes":
+            btnYes.config(relief='sunken')
+            btnNo.config(relief='raised')
+        else:
+            btnYes.config(relief='raised')
+            btnNo.config(relief='sunken')
 
     mainWindow = Tk()
     mainWindow.geometry('1024x768')
@@ -144,6 +165,58 @@ def runMainWindow():
         entry.pack()
 
         entries.append(entry)
+
+    #### Drug Tree
+    drugsTreeColumns = ['ID', 'Drug', 'On Recept', 'Packages Available']
+    drugsListTree = ttk.Treeview(mainWindow, columns=drugsTreeColumns, show='headings', height=5)
+    for col in drugsTreeColumns:
+        drugsListTree.heading(col, text=col)
+        drugsListTree.column(col, anchor='center', width=200)
+    refreshDTree()
+    drugsTreeScroll = ttk.Scrollbar(mainWindow, orient='vertical', command=drugsListTree.yview)
+    drugsListTree.configure(yscrollcommand=drugsTreeScroll.set)
+    drugsListTree.grid(row=3, column=0, pady=5, sticky='nsew')
+    drugsTreeScroll.grid(row=3, column=1, pady=5, sticky='ns')
+
+    #### Drug Data Entry
+    entryFrame2 = Frame(mainWindow)
+    entryFrame2.grid(row=4, column=0, ipady=10)
+    entries2 = []
+    entryNames2 = ['Drug', 'On Recept', 'Packages Available']
+    rSelected = StringVar(value="NO")
+
+    for name in entryNames2:
+        subframe = ttk.Frame(entryFrame2)
+        subframe.pack(side='left', padx=5)
+
+        label = ttk.Label(subframe, text=f'{name}')
+        label.pack()
+
+        if name == 'On Recept':
+            # Create a frame to hold the two buttons side by side
+            button_frame = ttk.Frame(subframe)
+            button_frame.pack()
+
+            btnYes = Button(button_frame, text="Tak", command=lambda: onReceptClicked("Yes"))
+            btnNo = Button(button_frame, text="Nie", command=lambda: onReceptClicked("No"))
+            btnYes.pack(side='left', padx=4)
+            btnNo.pack(side='left', padx=4)
+
+            btnYes.config(relief='raised')
+            btnNo.config(relief='sunken')
+
+        else:
+            entry = ttk.Entry(subframe, width=16)
+            entry.pack()
+            entries2.append(entry)
+
+    #### Drug Edit Buttons
+    dButtonsFrame = Frame(mainWindow)
+    dButtonsFrame.grid(row=5, column=0)
+    btnAdd2 = Button(dButtonsFrame, text='Dodaj')
+    btnDelete2 = Button(dButtonsFrame, text='Usun')
+    btnAdd2.pack(side='left', padx=5)
+    btnDelete2.pack(side='left', padx=5)
 
     # mainWindow.bind('<Configure>', updateFrameSize(frame=mainFrame))
     customersListTree.bind("<<TreeviewSelect>>", onTreeSelect)
