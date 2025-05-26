@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter import ttk
+from tkinter import messagebox
 from datetime import datetime
 import pandas as pd
 import customers
@@ -68,6 +69,9 @@ def registration_window(main_window):
     set_placeholder(password_entry, "Wpisz hasło", is_password=True)
 
     def register_user():
+        if not all([first_name_var.get().strip(), last_name_var.get().strip(), email_var.get().strip(), password_var.get().strip()]):
+            messagebox.showwarning("Błąd rejestracji", "Nie podano wymaganych danych")
+            return
         full_name = f"{first_name_var.get()} {last_name_var.get()}"
         try:
             customers.addCustomer(customers.customersDf, customers.addressDf,
@@ -75,7 +79,7 @@ def registration_window(main_window):
                                   email=email_var.get(),
                                   phone=phone_var.get())
         except Exception as e:
-            print(f"Błąd rejestracji: {e}")
+            messagebox.showerror("Błąd rejestracji", f"Coś poszło nie tak: {e}")
             return
         login_window(main_window)
 
@@ -127,7 +131,7 @@ def login_window(main_window):
                     current_user.update({'ID': retrieved_id, 'NAME': user_record.iloc[0]['NAME'], 'ROLE': 'user'})
                     user_window(main_window)
                     return
-            print("Błędne dane logowania")
+            messagebox.showerror("Błąd logowania", "Nieprawidłowy login lub hasło")
 
     Button(login_frame, text="Logowanie", command=attempt_login)\
         .grid(row=3, column=0, columnspan=2, pady=(15, 5), ipadx=10, ipady=2)
@@ -311,64 +315,35 @@ def admin_users_window(main_window):
             ))
 
     def popup(mode):
-        sel = user_tree.focus()
-        data = user_tree.item(sel)['values'] if sel else None
-        win = Toplevel(main_window)
-        win.title('Edycja użytkownika' if mode=='edit' else 'Dodawanie użytkownika')
-        win.geometry('400x350')
-        fields = ['NAME','E-MAIL','PHONE','STREET','CITY','COUNTRY']
-        vars_ = {f: StringVar() for f in fields}
-
-        # jeśli edycja, wczytaj dane z customers i address
-        if mode=='edit' and data:
-            user_id = data[0]
-            # wczytaj podstawowe dane
-            record = customers.customersDf[customers.customersDf['ID']==user_id].iloc[0]
-            for f in ['NAME','E-MAIL','PHONE']:
-                vars_[f].set(record[f])
-            # wczytaj adres
-            addr = customers.findAddress(customers.addressDf, user_id)
-            for f in ['STREET','CITY','COUNTRY']:
-                vars_[f].set(addr.get(f, ''))
-
-        for f in fields:
-            Label(win, text=f).pack(pady=5)
-            Entry(win, textvariable=vars_[f]).pack(pady=5)
-
-        def save():
+        selection = user_tree.focus()
+        values = user_tree.item(selection)['values'] if selection else None
+        popup_window = Toplevel(main_window)
+        popup_window.title('Edycja' if mode=='edit' else 'Dodaj użytkownika')
+        popup_window.geometry('400x300')
+        fields = ['NAME','E-MAIL','PHONE']
+        vars_dict = {f: StringVar() for f in fields}
+        for field in fields:
+            Label(popup_window, text=field).pack(pady=5)
+            Entry(popup_window, textvariable=vars_dict[field]).pack(pady=5)
+            if mode=='edit' and values:
+                vars_dict[field].set(values[cols.index(field)])
+        def save_user():
             if mode=='add':
-                customers.addCustomer(
-                    customers.customersDf,
-                    customers.addressDf,
-                    vars_['NAME'].get(),
-                    email=vars_['E-MAIL'].get(),
-                    phone=vars_['PHONE'].get(),
-                    street=vars_['STREET'].get(),
-                    city=vars_['CITY'].get(),
-                    country=vars_['COUNTRY'].get()
-                )
+                customers.addCustomer(customers.customersDf, customers.addressDf,
+                                      vars_dict['NAME'].get(), email=vars_dict['E-MAIL'].get(), phone=vars_dict['PHONE'].get())
             else:
-                customers.updateCustomer(
-                    customers.customersDf,
-                    customers.addressDf,
-                    identifier=user_id,
-                    NAME=vars_['NAME'].get(),
-                    email=vars_['E-MAIL'].get(),
-                    phone=vars_['PHONE'].get(),
-                    street=vars_['STREET'].get(),
-                    city=vars_['CITY'].get(),
-                    country=vars_['COUNTRY'].get()
-                )
+                customers.updateCustomer(customers.customersDf, customers.addressDf,
+                                         identifier=values[0], name=vars_dict['NAME'].get(),
+                                         email=vars_dict['E-MAIL'].get(), phone=vars_dict['PHONE'].get())
             populate(customers.customersDf)
-            win.destroy()
-
-        Button(win, text='Zapisz', command=save).pack(pady=10)
+            popup_window.destroy()
+        Button(popup_window, text='Zapisz', command=save_user).pack(pady=10)
 
     def delete_user():
-        sel = user_tree.focus()
-        if sel:
-            uid = user_tree.item(sel)['values'][0]
-            customers.removeCustomer(customers.customersDf, customers.addressDf, identifier=uid)
+        selected = user_tree.focus()
+        if selected:
+            delete_id = user_tree.item(selected)['values'][0]
+            customers.removeCustomer(customers.customersDf, customers.addressDf, identifier=delete_id)
             populate(customers.customersDf)
 
     populate(customers.customersDf.copy())
