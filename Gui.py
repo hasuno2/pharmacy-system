@@ -42,44 +42,52 @@ def registration_window(main_window):
     phone_var = StringVar()
     password_var = StringVar()
 
-    Label(registration_frame, text="Imię").grid(row=0, column=0, padx=10, pady=5)
-    first_name_entry = Entry(registration_frame, textvariable=first_name_var)
-    first_name_entry.grid(row=0, column=1, padx=10, pady=5)
+    Label(registration_frame, text="Imię", font=("Arial", 12)).grid(row=0, column=0, padx=10, pady=8, sticky=E)
+    first_name_entry = Entry(registration_frame, textvariable=first_name_var, font=("Arial", 12), width=20)
+    first_name_entry.grid(row=0, column=1, padx=10, pady=8, ipady=4)
     set_placeholder(first_name_entry, "Wpisz imię")
 
-    Label(registration_frame, text="Nazwisko").grid(row=1, column=0, padx=10, pady=5)
-    last_name_entry = Entry(registration_frame, textvariable=last_name_var)
-    last_name_entry.grid(row=1, column=1, padx=10, pady=5)
+    Label(registration_frame, text="Nazwisko", font=("Arial", 12)).grid(row=1, column=0, padx=10, pady=8, sticky=E)
+    last_name_entry = Entry(registration_frame, textvariable=last_name_var, font=("Arial", 12), width=20)
+    last_name_entry.grid(row=1, column=1, padx=10, pady=8, ipady=4)
     set_placeholder(last_name_entry, "Wpisz nazwisko")
 
-    Label(registration_frame, text="E-mail").grid(row=2, column=0, padx=10, pady=5)
-    email_entry = Entry(registration_frame, textvariable=email_var)
-    email_entry.grid(row=2, column=1, padx=10, pady=5)
+    Label(registration_frame, text="E-mail", font=("Arial", 12)).grid(row=2, column=0, padx=10, pady=8, sticky=E)
+    email_entry = Entry(registration_frame, textvariable=email_var, font=("Arial", 12), width=20)
+    email_entry.grid(row=2, column=1, padx=10, pady=8, ipady=4)
     set_placeholder(email_entry, "Wpisz e-mail")
 
-    Label(registration_frame, text="Telefon").grid(row=3, column=0, padx=10, pady=5)
-    phone_entry = Entry(registration_frame, textvariable=phone_var)
-    phone_entry.grid(row=3, column=1, padx=10, pady=5)
+    Label(registration_frame, text="Telefon", font=("Arial", 12)).grid(row=3, column=0, padx=10, pady=8, sticky=E)
+    phone_entry = Entry(registration_frame, textvariable=phone_var, font=("Arial", 12), width=20)
+    phone_entry.grid(row=3, column=1, padx=10, pady=8, ipady=4)
     set_placeholder(phone_entry, "Wpisz numer telefonu")
 
-    Label(registration_frame, text="Hasło").grid(row=4, column=0, padx=10, pady=5)
-    password_entry = Entry(registration_frame, textvariable=password_var)
-    password_entry.grid(row=4, column=1, padx=10, pady=5)
+    Label(registration_frame, text="Hasło", font=("Arial", 12)).grid(row=4, column=0, padx=10, pady=8, sticky=E)
+    password_entry = Entry(registration_frame, textvariable=password_var, font=("Arial", 12), width=20)
+    password_entry.grid(row=4, column=1, padx=10, pady=8, ipady=4)
     set_placeholder(password_entry, "Wpisz hasło", is_password=True)
 
     def register_user():
-        # dodajemy klienta do bazy
         full_name = f"{first_name_var.get()} {last_name_var.get()}"
         try:
             customers.addCustomer(customers.customersDf, customers.addressDf,
-                                  full_name, email=email_var.get(), phone=phone_var.get())
+                                  full_name,
+                                  email=email_var.get(),
+                                  phone=phone_var.get())
         except Exception as e:
             print(f"Błąd rejestracji: {e}")
             return
         login_window(main_window)
 
-    Button(registration_frame, text="Rejestruj", command=register_user).grid(row=5, column=0, columnspan=2, pady=10)
-    Button(registration_frame, text="Powrót", command=lambda: login_window(main_window)).grid(row=6, column=0, columnspan=2)
+    Button(registration_frame, text="Rejestruj",
+           font=("Arial", 12), width=15,
+           command=register_user)\
+        .grid(row=5, column=0, columnspan=2, pady=(20,5), ipady=5)
+
+    Button(registration_frame, text="Powrót",
+           font=("Arial", 12), width=15,
+           command=lambda: login_window(main_window))\
+        .grid(row=6, column=0, columnspan=2, pady=(0,20), ipady=5)
 
 # Okno logowania
 def login_window(main_window):
@@ -449,6 +457,6 @@ def purchase_window(main_window):
 # Uruchomienie aplikacji
 window = Tk()
 window.title("Aplikacja")
-window.geometry("400x300")
+window.geometry("500x400")
 login_window(window)
 window.mainloop()
