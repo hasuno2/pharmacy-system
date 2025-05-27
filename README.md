@@ -1,36 +1,61 @@
-# 🧪 Pharmacy System
+🧪 Pharmacy System
 
 A simple Python-based desktop application to manage pharmacy inventory and customer data using Excel and CSV files. Built with a Tkinter GUI, this tool allows for registering customers, managing drug stock, and handling prescription entries.
 
----
+🚀 Features
 
-## 🚀 Features
+Customer registration, editing, and deletion
 
-* Customer registration, editing, and deletion
-* Drug management: add/remove medications with or without prescription
-* Prescription tracking per customer
-* Excel-based drug database (`drugs.xlsx`)
-* CSV-based customer and address databases
-* Individual customer logs stored as text files
-* Functional Tkinter GUI (login, admin, and user panels)
-* Google-style documentation for core modules
-* Modular and extensible architecture
+Drug management: add/remove medications with or without prescription
 
----
+Prescription tracking per customer
 
-## 🧠 Tech Stack
+Excel-based drug database (drugs.xlsx)
 
-* **Python 3.x**
-* `pandas` for data handling
-* `openpyxl` for Excel integration
-* `tkinter` for GUI components
-* `csv`, `os`, `datetime` for file and date handling
+CSV-based customer and address databases
 
----
+Individual customer logs stored as text files
 
-## 🗂 Project Structure
+Functional Tkinter GUI (login, admin, and user panels)
 
-```
+Google-style documentation for core modules and GUIs
+
+Modular and extensible architecture
+
+🧠 Tech Stack
+
+Python 3.x
+
+pandas for data handling
+
+openpyxl for Excel integration
+
+tkinter for GUI components
+
+csv, os, datetime for file and date handling
+
+📚 Installation
+
+1. Clone the repository
+
+git clone https://github.com/your-username/pharmacy-system.git
+cd pharmacy-system
+
+2. Create a virtual environment (recommended)
+
+python -m venv venv
+source venv/bin/activate  # or venv\Scripts\activate on Windows
+
+3. Install dependencies
+
+pip install -r requirements.txt
+
+4. Run the application
+
+python main.py
+
+📂 Project Structure
+
 .
 ├── main.py           # Entry point & GUI controller
 ├── customers.py      # Customer CRUD logic
@@ -45,59 +70,67 @@ A simple Python-based desktop application to manage pharmacy inventory and custo
 ├── database/         # Per-customer purchase history logs
 ├── README.md         # Project overview
 └── requirements.txt  # Package dependencies
-```
 
----
+📄 Module Descriptions
 
-## 🧪 Getting Started
+login.py
 
-### ✅ Prerequisites
+Minimal Tkinter-based login window with placeholder logic for user entry. Includes transition to registration window.
 
-Install dependencies:
+login_window(window) — renders login GUI
 
-```bash
-pip install -r requirements.txt
-```
+set_placeholder(...) — handles entry field UX
 
-### ▶️ Run the app
+Depends on registration.py
 
-```bash
-python main.py
-```
+registration.py
 
-Alternative GUI entry points:
+Simple registration window with email and password fields. Uses similar UX logic to login window.
 
-```bash
-python login.py
-# or
-python Gui.py
-```
+registration_window(window, back_function) — displays registration panel
 
-You’ll start at the login screen. Current login logic is placeholder-based.
+set_placeholder(...) — reused for placeholder handling
 
----
+Gui.py
 
-## 👥 Team Roles
+All-in-one interface with:
 
-* **You**: Documentation, GitHub setup, backend support
-* Dev 1: Backend logic (customers, drugs)
-* Dev 2: Frontend GUI (Tkinter interface)
+login
 
----
+registration
 
-## 📝 Notes
+admin dashboard
 
-* All data is stored locally—no server required.
-* GUI modules (`Gui.py`, `login.py`, `registration.py`) can be merged or swapped as needed.
-* Planned improvements:
+user panel
 
-  * Real authentication
-  * More detailed logs and reporting
-  * Centralized GUI with routing
-  * Exception handling polish
+drug shop with add/edit/remove drug options
 
----
+Functions are grouped logically and leverage shared placeholder/input helpers. Built for later expansion.
 
-## 📌 License
+👥 Team Roles
+
+You: Documentation, GitHub setup, backend support
+
+Dev 1: Backend logic (customers, drugs)
+
+Dev 2: Frontend GUI (Tkinter interface)
+
+📝 Notes
+
+All data is stored locally—no server required.
+
+GUI modules (Gui.py, login.py, registration.py) can be merged or swapped as needed.
+
+Planned improvements:
+
+Real authentication
+
+More detailed logs and reporting
+
+Centralized GUI with routing
+
+Exception handling polish
+
+📌 License
 
 This project is intended for academic and educational use.
