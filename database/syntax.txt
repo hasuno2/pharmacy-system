@@ -1,0 +1,2 @@
+nazwa, on_recept, zakupiony, numer_recepty
+paracetamol, TAK, NIE, 10248124

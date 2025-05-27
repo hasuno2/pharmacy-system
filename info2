@@ -1,0 +1,9 @@
+leki:
+    dodawanie do bazy
+    usuwanie z bazy (po id lub nazwa)
+
+klienci:
+    rejestracja nowego klienta
+    usuwanie klienta
+    edycja klienta
+    wyswietlenie info o kliencie ig

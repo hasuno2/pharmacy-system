@@ -1,15 +1,12 @@
 """
 customers.py
 
-This module manages customer data and associated addresses for a pharmacy system.
-It supports customer registration, removal, updates, and ID lookup across CSV files.
+Handles customer-related operations including:
+- Adding new customers and addresses
+- Searching, updating, and removing customer records
+- Extracting addresses for display
 
-Functions:
-    addCustomer(cdf, adf, name, **kwargs)
-    findCustomer(cdf, adf, **kwargs)
-    removeCustomer(cdf, adf, identifier='', name='')
-    updateCustomer(cdf, adf, identifier, **kwargs)
-    findAddress(adf, identifier)
+Data is managed via pandas DataFrames and written to CSVs.
 """
 
 import pandas as pd
@@ -17,6 +14,7 @@ import globals
 from datetime import date
 import random
 
+# Load current data
 customersDf = pd.read_csv(globals.CUSTOMERS_DB, dtype=str)
 addressDf = pd.read_csv(globals.ADDRESS_DB, dtype=str)
 
@@ -30,18 +28,18 @@ columnMap = {
     'country': 'COUNTRY',
 }
 
-dateToday = date.today().strftime("%Y-%m-%d")
+dateToday = date.today().strftime("%Y-%m-%d")  # TODO: maybe make that a function
 
 
 def addCustomer(cdf, adf, name, **kwargs):
     """
-    Registers a new customer and creates an associated address entry and personal file.
+    Adds a new customer to the customer and address DataFrames.
 
     Args:
-        cdf (pd.DataFrame): Customer DataFrame.
-        adf (pd.DataFrame): Address DataFrame.
-        name (str): Name of the customer.
-        **kwargs: Optional fields such as email, phone, street, city, country.
+        cdf (pd.DataFrame): Customer data.
+        adf (pd.DataFrame): Address data.
+        name (str): Full name of the customer.
+        **kwargs: Optional fields - email, phone, street, city, country.
 
     Raises:
         ValueError: If phone number is too long.
@@ -49,8 +47,10 @@ def addCustomer(cdf, adf, name, **kwargs):
     """
     email = kwargs.get('email')
     phone = kwargs.get('phone')
-    if phone and len(str(phone)) > 9:
+    if len(str(phone)) > 9:
         raise ValueError('Error: Phone number is too long.')
+    if not phone:
+        phone = 'NaN'
 
     street = kwargs.get('street')
     city = kwargs.get('city')
@@ -60,31 +60,24 @@ def addCustomer(cdf, adf, name, **kwargs):
     while identifier in cdf['ID'].values:
         identifier = str(random.randint(1000, 9999))
 
-    if not phone:
-        phone = 'NaN'  # fallback used in source data
-
     cdf.loc[len(cdf)] = [identifier, name, email, phone, dateToday, dateToday]
     adf.loc[len(adf)] = [identifier, street, city, country]
 
-    path = f'{globals.DB_PATH}{identifier}.txt'
-    try:
-        with open(path, 'x') as f:
-            f.write('NAME, ON_RECEPT, BOUGHT, RECEPT_NR')
-    except FileExistsError:
-        raise FileExistsError(f"Customer file '{path}' already exists.")
+    with open(f'{globals.DB_PATH}{identifier}.txt', 'x') as f:
+        f.write('NAME, ON_RECEPT, BOUGHT, RECEPT_NR')
 
 
 def findCustomer(cdf, adf, **kwargs):
     """
-    Finds a customer ID based on one or more search criteria.
+    Finds a customer ID based on search parameters.
 
     Args:
-        cdf (pd.DataFrame): Customer DataFrame.
-        adf (pd.DataFrame): Address DataFrame.
-        **kwargs: Keyword arguments matching fields to search by.
+        cdf (pd.DataFrame): Customer data.
+        adf (pd.DataFrame): Address data.
+        **kwargs: Any searchable field (name, email, city, etc.).
 
     Returns:
-        str or None: The customer ID if found, else None.
+        str or None: Matching customer ID or None.
     """
     for arg, value in kwargs.items():
         try:
@@ -100,23 +93,23 @@ def findCustomer(cdf, adf, **kwargs):
 
 def removeCustomer(cdf, adf, identifier='', name=''):
     """
-    Removes a customer entry based on ID or name.
+    Removes a customer record.
 
     Args:
-        cdf (pd.DataFrame): Customer DataFrame.
-        adf (pd.DataFrame): Address DataFrame.
-        identifier (str, optional): ID of the customer.
-        name (str, optional): Name of the customer.
+        cdf (pd.DataFrame): Customer data.
+        adf (pd.DataFrame): Address data.
+        identifier (str): ID of the customer.
+        name (str): Name of the customer.
 
     Raises:
-        ValueError: If neither ID nor name is provided.
+        Exception: If neither ID nor name is provided.
     """
-    if identifier:
+    if identifier != '':
         i = cdf[cdf.ID == str(identifier)].index
-    elif name:
+    elif name != '':
         i = cdf[cdf.NAME == name].index
     else:
-        raise ValueError("Must provide either 'identifier' or 'name' to remove a customer.")
+        raise Exception
 
     if i.size == 0:
         print('No customer found')
@@ -127,43 +120,41 @@ def removeCustomer(cdf, adf, identifier='', name=''):
 
 def updateCustomer(cdf, adf, identifier, **kwargs):
     """
-    Updates an existing customer's contact or address information.
+    Updates customer or address data by ID.
 
     Args:
         cdf (pd.DataFrame): Customer DataFrame.
         adf (pd.DataFrame): Address DataFrame.
-        identifier (str): Unique customer ID.
-        **kwargs: Fields to update.
+        identifier (str): ID of the customer to update.
+        **kwargs: Field-value pairs to update.
 
     Raises:
-        Exception: If the column name is invalid or unknown.
+        Exception: If column name is invalid.
     """
     for arg, value in kwargs.items():
-        column = columnMap.get(arg)
-        if not column:
-            print(f'Warning: Column name "{arg}" is not present in {globals.CUSTOMERS_DB} or {globals.ADDRESS_DB}.')
-            continue
-
-        if column in cdf.columns:
-            cdf.loc[cdf['ID'] == str(identifier), column] = value
-        elif column in addressDf.columns:
-            adf.loc[addressDf['ID'] == str(identifier), column] = value
+        column = columnMap[arg]
+        if column:
+            if column in cdf.columns:
+                cdf.loc[cdf['ID'] == str(identifier), column] = value
+            elif column in addressDf.columns:
+                adf.loc[addressDf['ID'] == str(identifier), column] = value
+            else:
+                raise Exception
         else:
-            raise Exception(f"Column {column} not found in either customer or address data.")
-
+            print(f'Warning: Column name "{arg}" is not valid.')
     cdf.loc[cdf['ID'] == str(identifier), 'UPDATED'] = dateToday
 
 
 def findAddress(adf, identifier):
     """
-    Retrieves the address data for a given customer ID.
+    Retrieves address fields for a given ID.
 
     Args:
-        adf (pd.DataFrame): Address DataFrame.
-        identifier (str): Unique customer ID.
+        adf (pd.DataFrame): Address data.
+        identifier (str): Customer ID.
 
     Returns:
-        dict: A dictionary of address fields.
+        dict: Dictionary of address fields.
     """
     result = {}
     for column in adf.columns[1:]:
